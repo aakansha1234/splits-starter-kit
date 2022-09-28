@@ -11,12 +11,10 @@ contract YourContract {
   mapping(address => uint) public splits; // basis points
 
   mapping(address => uint) public ethClaimed;
-  uint public totalEthReceivedTillLastClaim = 0;
-  uint public ethBalanceAfterLastClaim = 0;
+  uint public totalEthClaimed = 0;
 
   mapping(address => mapping(address => uint)) public tokenClaimed; // erc20 -> address -> claimed amount
-  mapping(address => uint) public totalTokenReceivedTillLastClaim;
-  mapping(address => uint) public tokenBalanceAfterLastClaim;
+  mapping(address => uint) public totalTokenClaimed;
 
   uint constant totalBasis = 10_000;
 
@@ -31,11 +29,11 @@ contract YourContract {
   }
 
   function totalEthReceived() public view returns (uint) {
-    return totalEthReceivedTillLastClaim + address(this).balance - ethBalanceAfterLastClaim;
+    return address(this).balance + totalEthClaimed;
   }
 
   function totalTokenReceived(address token) public view returns (uint) {
-    return totalTokenReceivedTillLastClaim[token] + IERC20(token).balanceOf(address(this)) - tokenBalanceAfterLastClaim[token];
+    return IERC20(token).balanceOf(address(this)) + totalTokenClaimed[token];
   }
 
   function ethToClaim(address receiver) external view returns (uint) {
@@ -55,41 +53,34 @@ contract YourContract {
   }
 
   function redeemETH(address receiver) external {
-    if (address(this).balance > ethBalanceAfterLastClaim) {
-      totalEthReceivedTillLastClaim = totalEthReceived();
-    } // else totalEthReceivedTillLastClaim is already equal to totalEthReceived
+    uint _totalEthReceived = totalEthReceived();
 
     uint claimed = ethClaimed[receiver];
-    uint claim = totalEthReceivedTillLastClaim * splits[receiver] / totalBasis;
+    uint claim = _totalEthReceived * splits[receiver] / totalBasis;
     ethClaimed[receiver] = claim;
 
     uint toSend = claim - claimed;
+    totalEthClaimed += toSend;
 
     require(toSend > 0, "claimed");
     emit TokenSent(address(0), receiver, toSend);
 
-    ethBalanceAfterLastClaim = address(this).balance - toSend;
     (bool success, ) = payable(receiver).call{value: toSend}("");
     require(success, "eth not sent");
   }
 
   function redeemToken(address token, address receiver) external {
-    // No checks
-    // Effects
-    if (IERC20(token).balanceOf(address(this)) > tokenBalanceAfterLastClaim[token]) {
-      totalTokenReceivedTillLastClaim[token] = totalTokenReceived(token);
-    }
+    uint _totalTokenReceived = totalTokenReceived(token);
 
     uint claimed = tokenClaimed[token][receiver];
-    uint claim = totalTokenReceivedTillLastClaim[token] * splits[receiver] / totalBasis;
+    uint claim = _totalTokenReceived * splits[receiver] / totalBasis;
     tokenClaimed[token][receiver] = claim;
 
     uint toSend = claim - claimed;
+    totalTokenClaimed[token] += toSend;
 
     require(toSend > 0, "claimed");
     emit TokenSent(token, receiver, toSend);
-
-    tokenBalanceAfterLastClaim[token] = IERC20(token).balanceOf(address(this)) - toSend;
 
     // Interaction
     IERC20(token).transfer(receiver, toSend);
