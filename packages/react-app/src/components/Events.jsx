@@ -34,7 +34,8 @@ export default function Events({ contracts, contractName, eventName, localProvid
           return (
             <List.Item key={item.blockNumber + "_" + item.args.receiver + "_" + utils.formatEther(item.args.bal)}>
               <Address address={item.args[0]} ensProvider={mainnetProvider} fontSize={16} />
-              {utils.formatEther(item.args[1])}
+              <Address address={item.args[1]} ensProvider={mainnetProvider} fontSize={16} />
+              {utils.formatEther(item.args[2])}
             </List.Item>
           );
         }}

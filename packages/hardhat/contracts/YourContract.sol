@@ -57,7 +57,7 @@ contract YourContract {
   function redeemETH(address receiver) external {
     if (address(this).balance > ethBalanceAfterLastClaim) {
       totalEthReceivedTillLastClaim = totalEthReceived();
-    }
+    } // else totalEthReceivedTillLastClaim is already equal to totalEthReceived
 
     uint claimed = ethClaimed[receiver];
     uint claim = totalEthReceivedTillLastClaim * splits[receiver] / totalBasis;
@@ -74,6 +74,8 @@ contract YourContract {
   }
 
   function redeemToken(address token, address receiver) external {
+    // No checks
+    // Effects
     if (IERC20(token).balanceOf(address(this)) > tokenBalanceAfterLastClaim[token]) {
       totalTokenReceivedTillLastClaim[token] = totalTokenReceived(token);
     }
@@ -89,6 +91,7 @@ contract YourContract {
 
     tokenBalanceAfterLastClaim[token] = IERC20(token).balanceOf(address(this)) - toSend;
 
+    // Interaction
     IERC20(token).transfer(receiver, toSend);
   }
 

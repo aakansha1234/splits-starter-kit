@@ -80,7 +80,7 @@ export default function ExampleUI({
       <Events
         contracts={readContracts}
         contractName="YourContract"
-        eventName="ETHSent"
+        eventName="TokenSent"
         localProvider={localProvider}
         mainnetProvider={mainnetProvider}
         startBlock={1}
