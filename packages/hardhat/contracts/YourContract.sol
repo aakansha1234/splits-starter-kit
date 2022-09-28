@@ -37,29 +37,24 @@ contract YourContract {
   }
 
   function ethToClaim(address receiver) external view returns (uint) {
-    uint redeemed = ethClaimed[receiver];
     uint claim = totalEthReceived() * splits[receiver] / totalBasis;
 
-    uint toSend = claim - redeemed;
+    uint toSend = claim - ethClaimed[receiver];
     return toSend;
   }
 
   function tokenToClaim(address token, address receiver) external view returns (uint) {
-    uint claimed = tokenClaimed[token][receiver];
     uint claim = totalTokenReceived(token) * splits[receiver] / totalBasis;
 
-    uint toSend = claim - claimed;
+    uint toSend = claim - tokenClaimed[token][receiver];
     return toSend;
   }
 
   function redeemETH(address receiver) external {
-    uint _totalEthReceived = totalEthReceived();
-
-    uint claimed = ethClaimed[receiver];
-    uint claim = _totalEthReceived * splits[receiver] / totalBasis;
+    uint claim = totalEthReceived() * splits[receiver] / totalBasis;
     ethClaimed[receiver] = claim;
 
-    uint toSend = claim - claimed;
+    uint toSend = claim - ethClaimed[receiver];
     totalEthClaimed += toSend;
 
     require(toSend > 0, "claimed");
@@ -70,13 +65,10 @@ contract YourContract {
   }
 
   function redeemToken(address token, address receiver) external {
-    uint _totalTokenReceived = totalTokenReceived(token);
-
-    uint claimed = tokenClaimed[token][receiver];
-    uint claim = _totalTokenReceived * splits[receiver] / totalBasis;
+    uint claim = totalTokenReceived(token) * splits[receiver] / totalBasis;
     tokenClaimed[token][receiver] = claim;
 
-    uint toSend = claim - claimed;
+    uint toSend = claim - tokenClaimed[token][receiver];
     totalTokenClaimed[token] += toSend;
 
     require(toSend > 0, "claimed");
